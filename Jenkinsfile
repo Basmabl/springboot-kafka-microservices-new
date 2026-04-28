@@ -243,8 +243,9 @@ pipeline {
         }
         failure {
             echo '❌ Pipeline echoue'
-            sh "kubectl get pods -n ${NAMESPACE}"
-            sh "kubectl get events -n ${NAMESPACE} --sort-by=.lastTimestamp | tail -20"
+            sh "PATH=/usr/local/bin:$PATH kubectl get pods -n ${NAMESPACE}"
+            sh "PATH=/usr/local/bin:$PATH kubectl get events -n ${NAMESPACE} --sort-by=.lastTimestamp | tail -20"
+    
         }
     }
 }
