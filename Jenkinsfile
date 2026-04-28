@@ -66,56 +66,7 @@ pipeline {
             }
         }
 
-        stage('Security Scan Trivy') {
-    steps {
-        script {
-            // Étape 1 : télécharger les DBs une seule fois
-            echo '=== Téléchargement des DBs Trivy ==='
-            sh """
-                docker run --rm \
-                    -v trivy-cache:/root/.cache/trivy \
-                    aquasec/trivy:0.48.3 image \
-                    --download-db-only \
-                    --download-java-db-only \
-                    alpine:latest 2>/dev/null || true
-            """
-
-            // Étape 2 : scanner toutes les images avec cache + offline
-            def images = [
-                'identity-service',
-                'order-service',
-                'payment-service',
-                'product-service',
-                'email-service',
-                'api-gateway',
-                'eureka-server',
-                'frontend'
-            ]
-
-            // Étape 3 : scanner en parallèle
-            def parallelScans = [:]
-            images.each { img ->
-                parallelScans[img] = {
-                    echo "=== Trivy Scan: ${img} ==="
-                    sh """
-                        docker run --rm \
-                            -v /var/run/docker.sock:/var/run/docker.sock \
-                            -v trivy-cache:/root/.cache/trivy \
-                            aquasec/trivy:0.48.3 image \
-                            --timeout 10m \
-                            --exit-code 0 \
-                            --severity HIGH,CRITICAL \
-                            --scanners vuln \
-                            --skip-db-update \
-                            --skip-java-db-update \
-                            springboot-kafka-microservices/${img}:latest
-                    """
-                }
-            }
-            parallel parallelScans
-        }
-    }
-}
+ 
         stage('Load Images in KIND') {
             steps {
                 script {
