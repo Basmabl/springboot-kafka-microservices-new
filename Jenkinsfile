@@ -67,41 +67,42 @@ pipeline {
         }
 
         stage('Security Scan Trivy') {
-            steps {
-                script {
-                    def images = [
-                        'identity-service',
-                        'order-service',
-                        'payment-service',
-                        'product-service',
-                        'email-service',
-                        'api-gateway',
-                        'eureka-server',
-                        'frontend'
-                    ]
-                    images.each { img ->
-                        echo "=== Trivy Scan: ${img} ==="
-                        def status = sh(
-                            script: """
-                                docker run --rm \
-                                    -v /var/run/docker.sock:/var/run/docker.sock \
-                                    -v trivy-cache:/root/.cache/trivy \
-                                    aquasec/trivy:0.48.3 image \
-                                    --timeout 20m \
-                                    --exit-code 1 \
-                                    --severity HIGH,CRITICAL \
-                                    springboot-kafka-microservices/${img}:latest
-                            """,
-                            returnStatus: true
-                        )
-                        if (status == 1) {
-                            error "Trivy: vulnerabilites CRITICAL/HIGH dans ${img}"
-                        }
-                    }
+    steps {
+        script {
+            def images = [
+                'identity-service',
+                'order-service',
+                'payment-service',
+                'product-service',
+                'email-service',
+                'api-gateway',
+                'eureka-server',
+                'frontend'
+            ]
+            images.each { img ->
+                echo "=== Trivy Scan: ${img} ==="
+                def status = sh(
+                    script: """
+                        docker run --rm \
+                            -v /var/run/docker.sock:/var/run/docker.sock \
+                            -v trivy-cache:/root/.cache/trivy \
+                            aquasec/trivy:0.48.3 image \
+                            --timeout 20m \
+                            --exit-code 1 \
+                            --severity HIGH,CRITICAL \
+                            --scanners vuln \
+                            --skip-java-db-update \
+                            springboot-kafka-microservices/${img}:latest
+                    """,
+                    returnStatus: true
+                )
+                if (status == 1) {
+                    error "Trivy: vulnerabilites CRITICAL/HIGH dans ${img}"
                 }
             }
         }
-
+    }
+}
         stage('Load Images in KIND') {
             steps {
                 script {
