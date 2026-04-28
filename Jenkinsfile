@@ -91,7 +91,6 @@ pipeline {
                             --exit-code 0 \
                             --severity HIGH,CRITICAL \
                             --scanners vuln \
-                            --skip-java-db-update \
                             springboot-kafka-microservices/${img}:latest
                     """,
                     returnStatus: true
