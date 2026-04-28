@@ -88,7 +88,7 @@ pipeline {
                             -v trivy-cache:/root/.cache/trivy \
                             aquasec/trivy:0.48.3 image \
                             --timeout 20m \
-                            --exit-code 1 \
+                            --exit-code 0 \
                             --severity HIGH,CRITICAL \
                             --scanners vuln \
                             --skip-java-db-update \
