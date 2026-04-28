@@ -185,21 +185,24 @@ pipeline {
         }
 
         stage('Verify') {
-            steps {
-                echo '=== Attente que tous les pods soient Ready ==='
-                sh """
-                    kubectl wait --for=condition=ready pod \
-                        --all -n ${NAMESPACE} \
-                        --timeout=300s
-                """
+    steps {
+        echo '=== Attente que tous les pods soient Ready ==='
+        sh """
+            kubectl wait --for=condition=ready pod \
+                --all -n ${NAMESPACE} \
+                --timeout=300s
+        """
+        
+        echo '=== Attente Eureka propagation (60s) ==='
+        sh "sleep 60"
 
-                echo '=== Etat final des pods ==='
-                sh "kubectl get pods -n ${NAMESPACE}"
+        echo '=== Etat final des pods ==='
+        sh "kubectl get pods -n ${NAMESPACE}"
 
-                echo '=== Etat Ingress ==='
-                sh "kubectl get ingress -n ${NAMESPACE}"
-            }
-        }
+        echo '=== Etat Ingress ==='
+        sh "kubectl get ingress -n ${NAMESPACE}"
+    }
+}
     }
 
     post {
