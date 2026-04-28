@@ -1,0 +1,307 @@
+# ═══════════════════════════════════════════
+# MySQL — Order Service (port 3307)
+# ═══════════════════════════════════════════
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql-order
+  namespace: microservices
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql-order
+  template:
+    metadata:
+      labels:
+        app: mysql-order
+    spec:
+      nodeSelector:
+        tier: infrastructure
+      containers:
+        - name: mysql-order
+          image: mysql:8.0
+          ports:
+            - containerPort: 3306
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: root-password
+            - name: MYSQL_DATABASE
+              value: order_db
+          volumeMounts:
+            - name: mysql-order-data
+              mountPath: /var/lib/mysql
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "300m"
+      volumes:
+        - name: mysql-order-data
+          persistentVolumeClaim:
+            claimName: mysql-order-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-order-service
+  namespace: microservices
+spec:
+  selector:
+    app: mysql-order
+  ports:
+    - port: 3306
+      targetPort: 3306
+  type: ClusterIP
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-order-pvc
+  namespace: microservices
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+
+---
+# ═══════════════════════════════════════════
+# MySQL — Identity Service (port 3308)
+# ═══════════════════════════════════════════
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql-identity
+  namespace: microservices
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql-identity
+  template:
+    metadata:
+      labels:
+        app: mysql-identity
+    spec:
+      nodeSelector:
+        tier: infrastructure
+      containers:
+        - name: mysql-identity
+          image: mysql:8.0
+          ports:
+            - containerPort: 3306
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: root-password
+            - name: MYSQL_DATABASE
+              value: user_db
+          volumeMounts:
+            - name: mysql-identity-data
+              mountPath: /var/lib/mysql
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "300m"
+      volumes:
+        - name: mysql-identity-data
+          persistentVolumeClaim:
+            claimName: mysql-identity-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-identity-service
+  namespace: microservices
+spec:
+  selector:
+    app: mysql-identity
+  ports:
+    - port: 3306
+      targetPort: 3306
+  type: ClusterIP
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-identity-pvc
+  namespace: microservices
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+
+---
+# ═══════════════════════════════════════════
+# MySQL — Payment Service (port 3309)
+# ═══════════════════════════════════════════
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql-payment
+  namespace: microservices
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql-payment
+  template:
+    metadata:
+      labels:
+        app: mysql-payment
+    spec:
+      nodeSelector:
+        tier: infrastructure
+      containers:
+        - name: mysql-payment
+          image: mysql:8.0
+          ports:
+            - containerPort: 3306
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: root-password
+            - name: MYSQL_DATABASE
+              value: payment_db
+          volumeMounts:
+            - name: mysql-payment-data
+              mountPath: /var/lib/mysql
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "300m"
+      volumes:
+        - name: mysql-payment-data
+          persistentVolumeClaim:
+            claimName: mysql-payment-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-payment-service
+  namespace: microservices
+spec:
+  selector:
+    app: mysql-payment
+  ports:
+    - port: 3306
+      targetPort: 3306
+  type: ClusterIP
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-payment-pvc
+  namespace: microservices
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+
+---
+# ═══════════════════════════════════════════
+# MySQL — Product Service (port 3310)
+# ═══════════════════════════════════════════
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql-product
+  namespace: microservices
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql-product
+  template:
+    metadata:
+      labels:
+        app: mysql-product
+    spec:
+      nodeSelector:
+        tier: infrastructure
+      containers:
+        - name: mysql-product
+          image: mysql:8.0
+          ports:
+            - containerPort: 3306
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: root-password
+            - name: MYSQL_DATABASE
+              value: product_db
+          volumeMounts:
+            - name: mysql-product-data
+              mountPath: /var/lib/mysql
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "300m"
+      volumes:
+        - name: mysql-product-data
+          persistentVolumeClaim:
+            claimName: mysql-product-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-product-service
+  namespace: microservices
+spec:
+  selector:
+    app: mysql-product
+  ports:
+    - port: 3306
+      targetPort: 3306
+  type: ClusterIP
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-product-pvc
+  namespace: microservices
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+
+---
+# ═══════════════════════════════════════════
+# Secret partagé pour tous les MySQL
+# ═══════════════════════════════════════════
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mysql-secret
+  namespace: microservices
+type: Opaque
+stringData:
+  root-password: root

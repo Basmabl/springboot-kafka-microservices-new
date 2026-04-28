@@ -1,0 +1,88 @@
+spring:
+  application:
+    name: api-gateway
+  zipkin:
+    base-url: http://127.0.0.1:9411/
+  sleuth:
+    sampler:
+      probability: 1
+  cloud:
+    gateway:
+      routes:
+        - id: identity-service
+          uri: lb://IDENTITY-SERVICE
+          predicates:
+            - Path=/api/v1/auth/**
+
+        - id: product-service-read
+          uri: lb://PRODUCT-SERVICE
+          predicates:
+            - Path=/api/v1/products/**
+            - Method=GET
+
+        - id: product-service-write
+          uri: http://host.docker.internal:8084
+          predicates:
+            - Path=/api/v1/products/**
+            - Method=POST,PUT,DELETE,OPTIONS
+          filters:
+            - name: AuthenticationFilter
+            - name: RoleBasedAccessFilter
+              args:
+                requiredRoles: ADMIN, EMPLOYEE
+                requiredPermissions: MANAGE_PRODUCTS
+
+        - id: order-place
+          uri: lb://ORDER-SERVICE
+          predicates:
+            - Path=/api/v1/order
+            - Method=POST,OPTIONS
+          filters:
+            - name: AuthenticationFilter
+
+        - id: order-get-by-id
+          uri: lb://ORDER-SERVICE
+          predicates:
+            - Path=/api/v1/order/{id}
+            - Method=GET
+          filters:
+            - name: AuthenticationFilter
+            - name: RoleBasedAccessFilter
+              args:
+                requiredRoles: CUSTOMER
+
+        - id: order-get-all
+          uri: lb://ORDER-SERVICE
+          predicates:
+            - Path=/api/v1/orders
+            - Method=GET
+          filters:
+            - name: AuthenticationFilter
+            - name: RoleBasedAccessFilter
+              args:
+                requiredRoles: EMPLOYEE, ADMIN
+
+        - id: payment-service
+          uri: lb://PAYMENT-SERVICE
+          predicates:
+            - Path=/api/v1/payment/**
+          filters:
+            - name: AuthenticationFilter
+
+     
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://localhost:8761/eureka/}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  tracing:
+    sampling:
+      probability: 1
+
+server:
+  port: 9191

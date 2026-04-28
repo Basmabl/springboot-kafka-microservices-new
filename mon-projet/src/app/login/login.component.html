@@ -1,0 +1,22 @@
+<div class="bank-container">
+  <div class="login-card">
+    <h2>Ma Banque Digitale</h2>
+    <p>Connectez-vous à votre espace sécurisé</p>
+    
+    <form (ngSubmit)="onLogin()"> <div class="input-group">
+    <label>Identifiant</label>
+    <input type="text" name="username" [(ngModel)]="loginData.username" required>
+  </div>
+  
+  <div class="input-group">
+    <label>Code Secret</label>
+    <input type="password" name="password" [(ngModel)]="loginData.password" required>
+  </div>
+  
+  <button type="submit" class="btn-primary">Se connecter</button>
+  <a routerLink="/register" class="link">Pas encore client ? Ouvrir un compte</a>
+  
+</form>
+  </div>
+  
+</div>

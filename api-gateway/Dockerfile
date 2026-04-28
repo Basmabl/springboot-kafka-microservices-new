@@ -1,0 +1,12 @@
+FROM eclipse-temurin:17
+
+WORKDIR /app
+
+COPY target/api-gateway.jar /app/api-gateway.jar
+
+EXPOSE 9191
+
+ENTRYPOINT ["java", "-jar", "/app/api-gateway.jar"]
+
+
+

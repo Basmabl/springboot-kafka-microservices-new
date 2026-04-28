@@ -1,0 +1,37 @@
+<div class="container mt-5">
+  <div class="card shadow p-4 border-0" style="max-width: 500px; margin: auto; border-radius: 15px;">
+    <h2 class="text-center mb-4">💳 Paiement par Carte</h2>
+    <p class="text-center">Montant total : <span class="badge bg-success fs-5">{{ total }} €</span></p>
+
+    <form (ngSubmit)="confirmPayment()" #pForm="ngForm">
+      <div class="mb-3">
+        <label class="form-label">Nom sur la carte</label>
+        <input type="text" class="form-control" name="name" ngModel required placeholder="Basma Boulli">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Numéro de Carte</label>
+        <input type="text" class="form-control" name="card" ngModel required placeholder="4242 4242 4242 4242">
+      </div>
+      <div class="row">
+        <div class="col-6 mb-3">
+          <label class="form-label">Expiration</label>
+          <input type="text" class="form-control" name="exp" ngModel required placeholder="MM/YY">
+        </div>
+        <div class="col-6 mb-3">
+          <label class="form-label">CVV</label>
+          <input type="password" class="form-control" name="cvv" ngModel required placeholder="***">
+        </div>
+      </div>
+      <button type="submit" 
+        class="btn btn-primary w-100 py-2 shadow-sm" 
+        [disabled]="total === 0 || !pForm.valid || isLoading">
+  <span *ngIf="!isLoading">VALIDER LE PAIEMENT</span>
+  <span *ngIf="isLoading">⏳ Traitement en cours...</span>
+</button>
+      <div *ngIf="paymentSuccess" class="alert alert-success mt-3">
+  <i class="bi bi-check-circle"></i> 
+  Merci ! Votre commande est confirmée. Vérifiez votre boîte mail.
+</div>
+    </form>
+  </div>
+</div>

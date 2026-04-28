@@ -1,0 +1,37 @@
+<div class="bank-container">
+  <div class="login-card">
+    <h2>Inscription Banking</h2>
+    <p>Créez votre accès sécurisé</p>
+    
+    <form (ngSubmit)="onRegister()">
+      <div class="input-group">
+        <label>Nom complet</label>
+        <input type="text" name="name" [(ngModel)]="registerData.name" required>
+      </div>
+
+      <div class="input-group">
+        <label>Email</label>
+        <input type="email" name="email" [(ngModel)]="registerData.email" required>
+      </div>
+      
+      <div class="input-group">
+        <label>Mot de passe</label>
+        <input type="password" name="password" [(ngModel)]="registerData.password" required>
+      </div>
+
+      <div class="input-group">
+        <label>Vous êtes ?</label>
+        <select name="roles" [(ngModel)]="registerData.roles[0]">
+          <option value="CUSTOMER">Client (Customer)</option>
+          <option value="EMPLOYEE">Employé (Employee)</option>
+        </select>
+      </div>
+      
+      <button type="submit" class="btn-primary">S'inscrire</button>
+      
+      <div class="footer-links">
+        <a routerLink="/login" class="link">Déjà inscrit ? Connectez-vous</a>
+      </div>
+    </form>
+  </div>
+</div>

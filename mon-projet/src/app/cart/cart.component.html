@@ -1,0 +1,35 @@
+<div class="container mt-5">
+  <div class="card shadow p-4 border-0">
+    <h2 class="mb-4">🛒 Votre Panier</h2>
+
+    <div *ngIf="cartItems.length === 0" class="alert alert-info">
+      Votre panier est vide. <a routerLink="/products">Continuer mes achats</a>
+    </div>
+
+    <table *ngIf="cartItems.length > 0" class="table align-middle">
+      <thead>
+        <tr>
+          <th>Produit</th>
+          <th>Prix</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let item of cartItems">
+          <td>{{ item.name }}</td>
+          <td>{{ item.price }} €</td>
+        </tr>
+      </tbody>
+      <tfoot>
+        <tr>
+          <td class="fw-bold">Total</td>
+          <td class="fw-bold text-primary">{{ total }} €</td>
+        </tr>
+      </tfoot>
+    </table>
+
+    <div class="d-flex justify-content-between mt-4" *ngIf="cartItems.length > 0">
+      <button class="btn btn-outline-danger" (click)="clear()">Vider le panier</button>
+      <button class="btn btn-success px-5" (click)="goToPayment()">Procéder au paiement ➔</button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,31 @@
+<div class="product-container">
+  <h2 class="text-center mb-4">Nos Produits</h2>
+
+  <div class="grid">
+    <div *ngFor="let p of products" class="card">
+      
+      <span class="category-tag" *ngIf="p.categories && p.categories.length > 0">
+        {{ p.categories[0].name }}
+      </span>
+
+      <img [src]="p.imageUrl || 'assets/placeholder.jpg'" [alt]="p.name">
+
+      <div class="card-content">
+        <h3>{{ p.name }}</h3>
+        <p>{{ p.description }}</p>
+
+        <div class="price-row">
+          <span class="price">{{ p.price }} €</span>
+          
+          <button class="btn-details" (click)="buyProduct(p)">
+            <i class="bi bi-cart-plus"></i> Ajouter
+          </button>
+        </div>
+        
+        <small class="text-muted" *ngIf="p.variants">
+          {{ p.variants.length }} options disponibles
+        </small>
+      </div>
+    </div>
+  </div>
+</div>
