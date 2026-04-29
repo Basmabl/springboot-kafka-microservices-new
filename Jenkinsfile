@@ -66,7 +66,28 @@ pipeline {
             }
         }
 
- 
+        // ✅ TRIVY ICI — après build, avant load KIND
+        stage('Trivy Scan') {
+            steps {
+                script {
+                    def image = 'springboot-kafka-microservices/identity-service:latest'
+
+                    echo "=== Scan Trivy : ${image} ==="
+                    sh """
+                        docker run --rm \
+                            -v /var/run/docker.sock:/var/run/docker.sock \
+                            aquasec/trivy:latest image \
+                            --severity HIGH,CRITICAL \
+                            --exit-code 0 \
+                            --no-progress \
+                            --scanners vuln \
+                            --timeout 5m \
+                            ${image} || true
+                    """
+                }
+            }
+        }
+
         stage('Load Images in KIND') {
             steps {
                 script {
@@ -95,42 +116,13 @@ pipeline {
                         script: "kubectl get deployment ingress-nginx-controller -n ingress-nginx 2>/dev/null",
                         returnStatus: true
                     )
-
                     if (nginxExists != 0) {
                         echo '=== Installation NGINX Ingress ==='
-                        sh """
-                            kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
-                        """
-
-                        echo '=== Attente NGINX Running ==='
-                        sh """
-                            kubectl wait --namespace ingress-nginx \
-                                --for=condition=ready pod \
-                                --selector=app.kubernetes.io/component=controller \
-                                --timeout=180s
-                        """
-
-                        echo '=== Patch NGINX sur control-plane ==='
-                        sh """
-                            kubectl patch deployment ingress-nginx-controller \
-                                -n ingress-nginx \
-                                --type=json \
-                                --patch-file k8s/nginx-patch-json.json
-                        """
-
-                        echo '=== Suppression webhook ==='
-                        sh """
-                            kubectl delete validatingwebhookconfiguration \
-                                ingress-nginx-admission 2>/dev/null || true
-                        """
-
-                        echo '=== Attente NGINX apres patch ==='
-                        sh """
-                            kubectl wait --namespace ingress-nginx \
-                                --for=condition=ready pod \
-                                --selector=app.kubernetes.io/component=controller \
-                                --timeout=180s
-                        """
+                        sh "kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml"
+                        sh "kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=180s"
+                        sh "kubectl patch deployment ingress-nginx-controller -n ingress-nginx --type=json --patch-file k8s/nginx-patch-json.json"
+                        sh "kubectl delete validatingwebhookconfiguration ingress-nginx-admission 2>/dev/null || true"
+                        sh "kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=180s"
                     } else {
                         echo '=== NGINX deja installe, skip ==='
                     }
@@ -140,25 +132,12 @@ pipeline {
 
         stage('Deploy Kubernetes') {
             steps {
-                echo '=== Apply namespace ==='
                 sh "kubectl apply -f k8s/namespace.yaml"
-
-                echo '=== Deploy infrastructure ==='
                 sh "kubectl apply -f k8s/infrastructure/"
-
-                echo '=== Attente infrastructure (30s) ==='
                 sh "sleep 30"
-
-                echo '=== Deploy microservices ==='
                 sh "kubectl apply -f k8s/services/"
-
-                echo '=== Deploy frontend ==='
                 sh "kubectl apply -f k8s/frontend.yaml"
-
-                echo '=== Deploy Ingress ==='
                 sh "kubectl apply -f k8s/ingress/ingress.yaml"
-
-                echo '=== Deploy Istio config ==='
                 sh "kubectl apply -f k8s/istio/"
             }
         }
@@ -185,24 +164,13 @@ pipeline {
         }
 
         stage('Verify') {
-    steps {
-        echo '=== Attente que tous les pods soient Ready ==='
-        sh """
-            kubectl wait --for=condition=ready pod \
-                --all -n ${NAMESPACE} \
-                --timeout=300s
-        """
-        
-        echo '=== Attente Eureka propagation (60s) ==='
-        sh "sleep 60"
-
-        echo '=== Etat final des pods ==='
-        sh "kubectl get pods -n ${NAMESPACE}"
-
-        echo '=== Etat Ingress ==='
-        sh "kubectl get ingress -n ${NAMESPACE}"
-    }
-}
+            steps {
+                sh "kubectl wait --for=condition=ready pod --all -n ${NAMESPACE} --timeout=300s"
+                sh "sleep 60"
+                sh "kubectl get pods -n ${NAMESPACE}"
+                sh "kubectl get ingress -n ${NAMESPACE}"
+            }
+        }
     }
 
     post {
@@ -213,7 +181,6 @@ pipeline {
             echo '❌ Pipeline echoue'
             sh "PATH=/usr/local/bin:$PATH kubectl get pods -n ${NAMESPACE}"
             sh "PATH=/usr/local/bin:$PATH kubectl get events -n ${NAMESPACE} --sort-by=.lastTimestamp | tail -20"
-    
         }
     }
 }
