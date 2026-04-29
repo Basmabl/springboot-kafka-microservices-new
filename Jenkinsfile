@@ -13,6 +13,17 @@ pipeline {
 
     stages {
 
+        stage('Update Kubeconfig') {
+            steps {
+                echo '=== Mise a jour kubeconfig KIND ==='
+                sh """
+                    kind export kubeconfig \
+                        --name ${CLUSTER_NAME} \
+                        --kubeconfig /var/jenkins_home/.kube/config
+                """
+            }
+        }
+
         stage('Checkout') {
             steps {
                 echo '=== Récupération du code GitHub ==='
@@ -66,12 +77,10 @@ pipeline {
             }
         }
 
-        // ✅ TRIVY ICI — après build, avant load KIND
         stage('Trivy Scan') {
             steps {
                 script {
                     def image = 'springboot-kafka-microservices/identity-service:latest'
-
                     echo "=== Scan Trivy : ${image} ==="
                     sh """
                         docker run --rm \
@@ -132,12 +141,25 @@ pipeline {
 
         stage('Deploy Kubernetes') {
             steps {
+                echo '=== Apply namespace ==='
                 sh "kubectl apply -f k8s/namespace.yaml"
+
+                echo '=== Deploy infrastructure ==='
                 sh "kubectl apply -f k8s/infrastructure/"
+
+                echo '=== Attente infrastructure (30s) ==='
                 sh "sleep 30"
+
+                echo '=== Deploy microservices ==='
                 sh "kubectl apply -f k8s/services/"
+
+                echo '=== Deploy frontend ==='
                 sh "kubectl apply -f k8s/frontend.yaml"
+
+                echo '=== Deploy Ingress ==='
                 sh "kubectl apply -f k8s/ingress/ingress.yaml"
+
+                echo '=== Deploy Istio config ==='
                 sh "kubectl apply -f k8s/istio/"
             }
         }
@@ -165,9 +187,20 @@ pipeline {
 
         stage('Verify') {
             steps {
-                sh "kubectl wait --for=condition=ready pod --all -n ${NAMESPACE} --timeout=300s"
-                sh "sleep 60"
+                echo '=== Attente que tous les pods soient Ready ==='
+                sh """
+                    kubectl wait --for=condition=ready pod \
+                        --all -n ${NAMESPACE} \
+                        --timeout=300s
+                """
+
+                echo '=== Attente Eureka propagation (3 min) ==='
+                sh "sleep 180"
+
+                echo '=== Etat final des pods ==='
                 sh "kubectl get pods -n ${NAMESPACE}"
+
+                echo '=== Etat Ingress ==='
                 sh "kubectl get ingress -n ${NAMESPACE}"
             }
         }
@@ -179,8 +212,8 @@ pipeline {
         }
         failure {
             echo '❌ Pipeline echoue'
-            sh "PATH=/usr/local/bin:$PATH kubectl get pods -n ${NAMESPACE}"
-            sh "PATH=/usr/local/bin:$PATH kubectl get events -n ${NAMESPACE} --sort-by=.lastTimestamp | tail -20"
+            sh "PATH=/usr/local/bin:\$PATH kubectl get pods -n ${NAMESPACE} || true"
+            sh "PATH=/usr/local/bin:\$PATH kubectl get events -n ${NAMESPACE} --sort-by=.lastTimestamp | tail -20 || true"
         }
     }
 }
