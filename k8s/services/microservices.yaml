@@ -107,6 +107,11 @@ spec:
               value: order-service
             - name: EUREKA_INSTANCE_PREFER_IP_ADDRESS
               value: "false"
+            - name: APP_ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: aes-key
           resources:
             requests:
               memory: "256Mi"
@@ -162,6 +167,11 @@ spec:
                 secretKeyRef:
                   name: app-secrets
                   key: mysql-password
+            - name: APP_ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: aes-key
             - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
               value: kafka-broker:9092
             - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
@@ -315,6 +325,11 @@ spec:
                 secretKeyRef:
                   name: app-secrets
                   key: mail-host
+            - name: APP_ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: aes-key
             - name: SPRING_MAIL_PORT
               valueFrom:
                 secretKeyRef:

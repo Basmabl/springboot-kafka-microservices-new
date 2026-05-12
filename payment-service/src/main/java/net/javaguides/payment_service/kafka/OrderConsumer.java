@@ -1,7 +1,7 @@
 package net.javaguides.payment_service.kafka;
 
-
 import net.javaguides.common_lib.dto.order.OrderEvent;
+import net.javaguides.common_lib.encryption.EncryptionService; // ← AJOUTER
 import net.javaguides.payment_service.entity.PaymentStatus;
 import net.javaguides.payment_service.service.PaymentService;
 import org.slf4j.Logger;
@@ -12,12 +12,16 @@ import org.springframework.stereotype.Service;
 @Service
 public class OrderConsumer {
     private static final Logger LOGGER = LoggerFactory.getLogger(OrderConsumer.class);
+
     private final PaymentService paymentService;
+    private final EncryptionService encryptionService; // ← AJOUTER
 
-    public OrderConsumer(PaymentService paymentService) {
+    // ← MODIFIER le constructeur
+    public OrderConsumer(PaymentService paymentService,
+                         EncryptionService encryptionService) {
         this.paymentService = paymentService;
+        this.encryptionService = encryptionService; // ← AJOUTER
     }
-
 
     @KafkaListener(topics = "${spring.kafka.order-topic.name}",
             groupId = "${spring.kafka.consumer.group-id}")
@@ -25,19 +29,21 @@ public class OrderConsumer {
         try {
             LOGGER.info(String.format("OrderDTO event received in payment service -> %s", orderEvent.toString()));
 
+            // ← AJOUTER ces 3 lignes
+            if (orderEvent.getEmail() != null) {
+                orderEvent.setEmail(encryptionService.decrypt(orderEvent.getEmail()));
+            }
+
             if(orderEvent.getMessage().equals("REFUND")){
                 paymentService.refundPayment(orderEvent.getOrderDTO().getOrderId());
                 return;
             }
-
             if(orderEvent.getMessage().equals("PAID")){
                 paymentService.updateStatusPayment(orderEvent.getOrderDTO().getOrderId(), PaymentStatus.SUCCESS);
                 return;
             }
-
             paymentService.createPayment(orderEvent);
-
-        }catch(Exception e){
+        } catch(Exception e){
            LOGGER.warn(String.format("Error message -> %s", e.getMessage()));
         }
     }

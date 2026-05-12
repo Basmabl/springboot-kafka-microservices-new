@@ -8,12 +8,13 @@ import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.scheduling.annotation.EnableAsync;
 
-@SpringBootApplication(exclude = {DataSourceAutoConfiguration.class, HibernateJpaAutoConfiguration.class})
+@SpringBootApplication(
+    scanBasePackages = {"net.javaguides.email_service", "net.javaguides.common_lib"},
+    exclude = {DataSourceAutoConfiguration.class, HibernateJpaAutoConfiguration.class}
+)
 @EnableFeignClients
 public class EmailServiceApplication {
-
-	public static void main(String[] args) {
-		SpringApplication.run(EmailServiceApplication.class, args);
-	}
-
+        public static void main(String[] args) {
+                SpringApplication.run(EmailServiceApplication.class, args);
+        }
 }

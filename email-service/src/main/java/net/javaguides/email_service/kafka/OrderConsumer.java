@@ -1,7 +1,7 @@
 package net.javaguides.email_service.kafka;
 
-
 import net.javaguides.common_lib.dto.order.OrderEvent;
+import net.javaguides.common_lib.encryption.EncryptionService; // ← AJOUTER
 import net.javaguides.email_service.service.EmailService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,16 +16,22 @@ public class OrderConsumer {
     @Autowired
     private EmailService emailService;
 
+    @Autowired
+    private EncryptionService encryptionService; // ← AJOUTER
 
     @KafkaListener(topics = "${spring.kafka.order-topic.name}",
             groupId = "${spring.kafka.consumer.group-id}")
     public void consume(OrderEvent orderEvent){
         try {
-            LOGGER.info(String.format("OrderDTO event received in payment service -> %s", orderEvent.toString()));
+            LOGGER.info(String.format("OrderDTO event received in email service -> %s", orderEvent.toString()));
+
+            // ← AJOUTER ces 3 lignes
+            if (orderEvent.getEmail() != null) {
+                orderEvent.setEmail(encryptionService.decrypt(orderEvent.getEmail()));
+            }
 
             emailService.sendOrderConfirmationEmail(orderEvent);
-
-        }catch(Exception e){
+        } catch(Exception e){
             LOGGER.warn(String.format("Error message -> %s", e.getMessage()));
         }
     }

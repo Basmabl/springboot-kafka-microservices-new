@@ -6,7 +6,7 @@ import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 
 
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = {"net.javaguides.order_service", "net.javaguides.common_lib"})
 @EnableFeignClients
 @EnableCaching
 public class OrderServiceApplication {
