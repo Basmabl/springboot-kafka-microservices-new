@@ -4,36 +4,21 @@ pipeline {
     tools {
         maven 'Maven-3.9'
         jdk 'JDK-17'
-        // Vérifie que 'CX_CLI' est le nom exact dans Administrer Jenkins > Tools
-        'com.checkmarx.jenkins.CxScanConfig' 'CX_CLI' 
-    }
-
-    environment {
-        CLUSTER_NAME = 'microservices-cluster'
-        NAMESPACE    = 'microservices'
+        // ← REMOVED: 'com.checkmarx.jenkins.CxScanConfig' 'CX_CLI'
+        // Checkmarx AST Scanner does NOT need a tools declaration
     }
 
     stages {
-        // ÉTAPE 1 : Récupérer le code source (Indispensable avant le scan)
+
+        // STEP 1 — Checkout (mandatory before scan)
         stage('Checkout') {
             steps {
-                echo '=== Récupération du code GitHub ==='
+                echo '=== Fetching source code from GitHub ==='
                 checkout scm
             }
         }
 
-        // ÉTAPE 2 : Scanner le code avec Checkmarx
-        stage('Security Scan (Checkmarx)') {
-            steps {
-                echo '=== Analyse de sécurité avec Checkmarx ==='
-                checkmarxASTScanner(
-                    projectName: 'springboot-kafka-microservices-intern',
-                    serverUrl: 'https://eu.ast.checkmarx.net/', 
-                    credentialsId: 'checkmarx-credstesr'
-                )
-            }
-        }
-
+        // STEP 2 — Build common-lib (needed by other services)
         stage('Build common-lib') {
             steps {
                 dir('common-lib') {
@@ -42,6 +27,7 @@ pipeline {
             }
         }
 
+        // STEP 3 — Build all services (so Checkmarx can scan compiled code too)
         stage('Build Services') {
             steps {
                 script {
@@ -64,40 +50,26 @@ pipeline {
             }
         }
 
-        stage('Docker Build Backend') {
+        // STEP 4 — Checkmarx AST SAST scan
+        stage('Security Scan (Checkmarx AST)') {
             steps {
-                echo '=== Build images Docker backend ==='
-                sh 'docker-compose -p myapp build'
+                echo '=== Checkmarx AST Security Scan ==='
+                checkmarxASTScanner(
+                    projectName: 'springboot-kafka-microservices-intern',
+                    serverUrl: 'https://eu.ast.checkmarx.net/',
+                    credentialsId: 'checkmarx-credstesr'
+                )
             }
         }
 
-        stage('Docker Build Frontend') {
-            steps {
-                echo '=== Build image Docker frontend ==='
-                dir('mon-projet') {
-                    sh 'docker build -t springboot-kafka-microservices/frontend:latest .'
-                }
-            }
-        }
-
-        stage('Update Kubeconfig') {
-            steps {
-                echo '=== Mise a jour kubeconfig KIND ==='
-                sh """
-                    kind export kubeconfig \
-                        --name ${CLUSTER_NAME} \
-                        --kubeconfig /var/jenkins_home/.kube/config
-                """
-            }
-        }
     }
 
     post {
         success {
-            echo '✅ Pipeline reussi — app disponible sur http://localhost'
+            echo '✅ Pipeline succeeded — Checkmarx scan complete'
         }
         failure {
-            echo '❌ Pipeline echoue'
+            echo '❌ Pipeline failed — check logs above'
         }
     }
 }
